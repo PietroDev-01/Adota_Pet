@@ -72,6 +72,8 @@ VITE_PROJECT_ID=seu-projeto-id
 VITE_STORAGE_BUCKET=seu-projeto.appspot.com
 VITE_MESSAGING_SENDER_ID=123456789
 VITE_APP_ID=1:123456789:web:abcdef
+# Senha para acessar o Painel do Protetor
+VITE_ADMIN_PASS=admin123
 ```
 
 ### 5. Rodar o servidor de desenvolvimento
