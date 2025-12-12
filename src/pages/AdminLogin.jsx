@@ -7,7 +7,7 @@ export default function AdminLogin({ onLoginSuccess, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (password === 'admin123') {
+    if (password === import.meta.env.VITE_ADMIN_PASS) {
       onLoginSuccess();
     } else {
       setError('Credenciais inválidas. Tente novamente.');

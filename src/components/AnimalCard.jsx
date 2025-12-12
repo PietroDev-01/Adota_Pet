@@ -3,6 +3,10 @@ import { Phone, Dog, Cat, Image as ImageIcon, Heart } from 'lucide-react';
 
 export default function AnimalCard({ animal }) {
   const isAdopted = animal.status === 'adotado';
+  
+  const whatsappMessage = encodeURIComponent(
+    `Olá, vi o ${animal.name} no Adota-Pet e tenho interesse em adotá-lo!`
+  );
 
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full group relative">
@@ -64,7 +68,7 @@ export default function AnimalCard({ animal }) {
         {/* Botão de Ação */}
         {!isAdopted ? (
           <a 
-            href={`https://wa.me/?text=Olá, vi o ${animal.name} no Adota-Pet e tenho interesse em adotá-lo!`}
+            href={`https://wa.me/?text=${whatsappMessage}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-auto w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-bold shadow-green-200 shadow-lg hover:-translate-y-1"

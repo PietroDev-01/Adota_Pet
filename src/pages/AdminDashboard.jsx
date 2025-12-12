@@ -6,9 +6,10 @@ export default function AdminDashboard({ animals }) {
   const [formData, setFormData] = useState({
     name: '', type: 'cachorro', breed: '', age: '', description: '', imageUrl: '', status: 'disponivel'
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Estado para controlar as abas de upload
+  // Estados de controle e validação
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadMode, setUploadMode] = useState('file');
 
   const handleFileChange = (e) => {
@@ -21,21 +22,34 @@ export default function AdminDashboard({ animals }) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData({ ...formData, imageUrl: reader.result });
+        if (errors.imageUrl) setErrors({...errors, imageUrl: null});
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = "O nome é obrigatório.";
+    if (!formData.age.trim()) newErrors.age = "A idade é obrigatória.";
+    if (!formData.description.trim()) newErrors.description = "A descrição é obrigatória.";
+    else if (formData.description.length < 10) newErrors.description = "Descreva melhor (mín. 10 letras).";
+    
+    if (!formData.imageUrl) newErrors.imageUrl = "A foto é obrigatória.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
+
     setIsSubmitting(true);
     try {
-      if(!formData.imageUrl) throw new Error("A imagem do animal é obrigatória!");
-      
       await AnimalService.add(formData);
-      
-      // Resetar form
       setFormData({ name: '', type: 'cachorro', breed: '', age: '', description: '', imageUrl: '', status: 'disponivel' });
+      setErrors({});
       alert('Animal cadastrado com sucesso!');
     } catch (error) {
       alert('Erro ao cadastrar: ' + error.message);
@@ -73,18 +87,21 @@ export default function AdminDashboard({ animals }) {
         
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Coluna da Esquerda: Dados */}
+          {/* Coluna da Esquerda: Inputs */}
           <div className="lg:col-span-7 space-y-5">
             <div>
               <label className="text-sm font-bold text-gray-700 mb-1 block">Nome do Pet</label>
               <input 
-                required 
                 type="text" 
                 placeholder="Ex: Paçoca"
-                className="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition" 
+                className={`w-full p-3 border rounded-xl outline-none transition ${errors.name ? 'border-red-500 bg-red-50' : 'bg-gray-100 border-gray-200 focus:ring-2 focus:ring-teal-500'}`}
                 value={formData.name} 
-                onChange={e => setFormData({...formData, name: e.target.value})} 
+                onChange={e => {
+                  setFormData({...formData, name: e.target.value});
+                  if (errors.name) setErrors({...errors, name: null});
+                }} 
               />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -105,13 +122,16 @@ export default function AdminDashboard({ animals }) {
               <div>
                 <label className="text-sm font-bold text-gray-700 mb-1 block">Idade</label>
                 <input 
-                  required 
                   type="text" 
                   placeholder="Ex: 2 anos" 
-                  className="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition" 
+                  className={`w-full p-3 border rounded-xl outline-none transition ${errors.age ? 'border-red-500 bg-red-50' : 'bg-gray-100 border-gray-200 focus:ring-2 focus:ring-teal-500'}`}
                   value={formData.age} 
-                  onChange={e => setFormData({...formData, age: e.target.value})} 
+                  onChange={e => {
+                    setFormData({...formData, age: e.target.value});
+                    if (errors.age) setErrors({...errors, age: null});
+                  }} 
                 />
+                {errors.age && <p className="text-red-500 text-xs mt-1">{errors.age}</p>}
               </div>
             </div>
 
@@ -129,20 +149,22 @@ export default function AdminDashboard({ animals }) {
             <div>
               <label className="text-sm font-bold text-gray-700 mb-1 block">História / Descrição</label>
               <textarea 
-                required 
                 placeholder="Conte um pouco sobre a personalidade dele..." 
-                className="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl h-32 resize-none focus:ring-2 focus:ring-teal-500 outline-none transition" 
+                className={`w-full p-3 border rounded-xl h-32 resize-none outline-none transition ${errors.description ? 'border-red-500 bg-red-50' : 'bg-gray-100 border-gray-200 focus:ring-2 focus:ring-teal-500'}`}
                 value={formData.description} 
-                onChange={e => setFormData({...formData, description: e.target.value})}
+                onChange={e => {
+                  setFormData({...formData, description: e.target.value});
+                  if (errors.description) setErrors({...errors, description: null});
+                }}
               ></textarea>
+              {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
             </div>
           </div>
 
-          {/* Coluna da Direita: Upload de Imagem */}
-          <div className="lg:col-span-5 flex flex-col">
+          {/* Coluna da Direita: Upload (CORRIGIDO) */}
+          <div className="lg:col-span-5 flex flex-col h-full">
             <label className="text-sm font-bold text-gray-700 mb-2 block">Foto do Pet</label>
             
-            {/* Abas de Seleção */}
             <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
               <button
                 type="button"
@@ -160,8 +182,7 @@ export default function AdminDashboard({ animals }) {
               </button>
             </div>
 
-            {/* Área de Input */}
-            <div className="flex-grow bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl relative overflow-hidden group hover:border-teal-400 transition-colors">
+            <div className={`flex-grow bg-gray-100 border-2 border-dashed rounded-xl relative overflow-hidden group transition-colors min-h-[250px] ${errors.imageUrl ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-teal-400'}`}>
               
               {formData.imageUrl ? (
                 <div className="absolute inset-0 z-10 bg-white">
@@ -174,19 +195,15 @@ export default function AdminDashboard({ animals }) {
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
-                  <div className="absolute bottom-2 left-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" /> Foto Pronta
-                  </div>
                 </div>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-6 text-center">
                   {uploadMode === 'file' ? (
                     <>
                       <div className="bg-white p-4 rounded-full shadow-sm mb-3">
-                        <Upload className="w-8 h-8 text-teal-500" />
+                        <Upload className={`w-8 h-8 ${errors.imageUrl ? 'text-red-400' : 'text-teal-500'}`} />
                       </div>
                       <p className="text-sm font-medium text-gray-600">Clique para selecionar</p>
-                      <p className="text-xs text-gray-400 mt-1">JPG ou PNG (max 800kb)</p>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -197,25 +214,29 @@ export default function AdminDashboard({ animals }) {
                   ) : (
                     <>
                       <div className="bg-white p-4 rounded-full shadow-sm mb-3">
-                        <LinkIcon className="w-8 h-8 text-blue-500" />
+                        <LinkIcon className={`w-8 h-8 ${errors.imageUrl ? 'text-red-400' : 'text-blue-500'}`} />
                       </div>
                       <input 
                         type="url" 
                         placeholder="Cole o link da imagem aqui..." 
                         className="w-full p-2 text-sm text-center bg-transparent border-b border-gray-300 focus:border-teal-500 outline-none text-gray-800 placeholder-gray-400"
                         value={formData.imageUrl} 
-                        onChange={e => setFormData({...formData, imageUrl: e.target.value})} 
+                        onChange={e => {
+                          setFormData({...formData, imageUrl: e.target.value});
+                          if (errors.imageUrl) setErrors({...errors, imageUrl: null});
+                        }} 
                       />
                     </>
                   )}
                 </div>
               )}
             </div>
+            {errors.imageUrl && <p className="text-red-500 text-xs mt-2 text-center">{errors.imageUrl}</p>}
             
             <button 
               disabled={isSubmitting} 
               type="submit" 
-              className="mt-4 w-full bg-teal-600 hover:bg-teal-700 text-white py-4 rounded-xl font-bold text-lg shadow-teal-200 shadow-lg transition transform hover:-translate-y-0.5 active:translate-y-0"
+              className="mt-4 w-full bg-teal-600 hover:bg-teal-700 text-white py-4 rounded-xl font-bold text-lg shadow-teal-200 shadow-lg transition transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Salvando...' : 'Cadastrar Pet'}
             </button>
@@ -226,9 +247,9 @@ export default function AdminDashboard({ animals }) {
       {/* Lista de Gerenciamento */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-           <h3 className="font-bold text-gray-700 flex items-center gap-2">
-             <ImageIcon className="w-5 h-5" /> Galeria Atual
-           </h3>
+          <h3 className="font-bold text-gray-700 flex items-center gap-2">
+            <ImageIcon className="w-5 h-5" /> Galeria Atual
+          </h3>
         </div>
         <ul className="divide-y divide-gray-100">
           {animals.map(animal => (
